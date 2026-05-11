@@ -1,16 +1,22 @@
 # Project settings. CLI flags override these values.
 
-title       = "Top Creators 2024"
-duration    = 20
-n_bars      = 5
-fps         = 30
-cmap        = "dark12"
-period_fmt  = "%Y-%m"
-bar_size    = 0.95
-dpi         = 120
+title              = "Top Creators 2024"
+duration           = 20
+n_bars             = 5
+fps                = 30
+period_fmt         = "%Y-%m"
+bar_size           = 0.85
+dpi                = 120
+title_size         = 54      # tripled from the matplotlib default
+value_label_size   = 22      # in-bar value labels
+period_label_size  = 36      # bottom-right date label
+icon_size_px       = 220     # source size for circular icons
+background         = "white"
 
 # Optional asset paths (relative to this folder).
-# Drop a logo.png here to overlay it in the top-right corner.
-# Drop an audio file (audio.mp3 / audio.wav / audio.m4a) here to use as background.
 logo  = "logo.png"
 audio = "audio.mp3"
+
+# Optional icons folder. Looks for icons/<column-name>.{png,jpg,jpeg,webp};
+# columns without a matching icon get no y-axis label.
+icons_dir = "icons"

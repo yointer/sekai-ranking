@@ -5,11 +5,12 @@ Usage:
 
 Project folder layout:
     project/
-      data.csv      # required: wide-format CSV (first column = time period)
-      config.toml   # optional: title, duration, asset paths, etc.
-      logo.png      # optional: overlaid in top-right corner
-      audio.mp3     # optional: muxed as background audio (looped/trimmed)
-      out.mp4       # generated output (overwritten on each run)
+      data.csv         # required: wide-format CSV (first column = time period)
+      config.toml      # optional: title, duration, asset paths, etc.
+      icons/           # optional: <column-name>.png per item (circular icons on y-axis)
+      logo.png         # optional: overlaid in top-right corner
+      audio.mp3        # optional: muxed as background audio (looped/trimmed)
+      out.mp4          # generated output (overwritten on each run)
 
 CLI flags override matching values in config.toml.
 """
@@ -22,17 +23,11 @@ import subprocess
 import sys
 import tempfile
 import tomllib
-import warnings
 from pathlib import Path
-
-warnings.filterwarnings("ignore", category=UserWarning, module=r"bar_chart_race\..*")
 
 import pandas as pd
 
-try:
-    import bar_chart_race as bcr
-except ImportError:
-    sys.exit("bar_chart_race is not installed. Run: pip install -r requirements.txt")
+from renderer import render_bar_chart_race, load_icons
 
 
 CONFIG_DEFAULTS: dict = {
@@ -40,13 +35,18 @@ CONFIG_DEFAULTS: dict = {
     "duration": 30.0,
     "n_bars": 10,
     "fps": 30,
-    "cmap": "dark12",
     "period_fmt": None,
-    "bar_size": 0.95,
+    "bar_size": 0.85,
     "dpi": 120,
+    "title_size": 54,
+    "value_label_size": 22,
+    "period_label_size": 36,
+    "icon_size_px": 220,
+    "background": "white",
     "logo": None,
     "audio": None,
     "data": "data.csv",
+    "icons_dir": "icons",
     "output": "out.mp4",
 }
 
@@ -63,12 +63,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--duration", type=float, default=None, help="Target video length (seconds).")
     p.add_argument("--n-bars", type=int, default=None)
     p.add_argument("--fps", type=int, default=None)
-    p.add_argument("--cmap", default=None)
     p.add_argument("--period-fmt", default=None)
     p.add_argument("--bar-size", type=float, default=None)
     p.add_argument("--dpi", type=int, default=None)
-    p.add_argument("--no-audio", action="store_true", help="Skip audio mux even if audio file present.")
-    p.add_argument("--no-logo", action="store_true", help="Skip logo overlay even if logo.png present.")
+    p.add_argument("--title-size", type=int, default=None)
+    p.add_argument("--background", default=None, help="Figure background color (named or #hex).")
+    p.add_argument("--no-audio", action="store_true", help="Skip audio mux.")
+    p.add_argument("--no-logo", action="store_true", help="Skip logo overlay.")
     return p.parse_args()
 
 
@@ -95,10 +96,11 @@ def merge_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
         "duration": args.duration,
         "n_bars": args.n_bars,
         "fps": args.fps,
-        "cmap": args.cmap,
         "period_fmt": args.period_fmt,
         "bar_size": args.bar_size,
         "dpi": args.dpi,
+        "title_size": args.title_size,
+        "background": args.background,
     }
     for k, v in overrides.items():
         if v is not None:
@@ -132,16 +134,7 @@ def load_dataframe(csv_path: Path) -> pd.DataFrame:
     return df
 
 
-def compute_timing(n_periods: int, duration_s: float, fps: int) -> tuple[int, int]:
-    transitions = max(n_periods - 1, 1)
-    total_frames = max(int(round(fps * duration_s)), transitions)
-    steps_per_period = max(1, round(total_frames / transitions))
-    period_length_ms = max(1, round(1000 * steps_per_period / fps))
-    return steps_per_period, period_length_ms
-
-
 def resolve_asset(project_dir: Path, value, candidates: tuple[str, ...] = ()) -> Path | None:
-    """Resolve an asset path: explicit value wins, else try candidates, else None."""
     if value:
         path = (project_dir / value) if not Path(value).is_absolute() else Path(value)
         return path if path.exists() else None
@@ -150,34 +143,6 @@ def resolve_asset(project_dir: Path, value, candidates: tuple[str, ...] = ()) ->
         if path.exists():
             return path
     return None
-
-
-def render_chart(df: pd.DataFrame, output: Path, config: dict) -> None:
-    steps_per_period, period_length_ms = compute_timing(len(df), config["duration"], config["fps"])
-    print(
-        f"  rendering: {len(df)} periods, {df.shape[1]} items, "
-        f"steps_per_period={steps_per_period}, period_length={period_length_ms}ms, fps={config['fps']}",
-        file=sys.stderr,
-    )
-    bcr.bar_chart_race(
-        df=df,
-        filename=str(output),
-        n_bars=config["n_bars"],
-        steps_per_period=steps_per_period,
-        period_length=period_length_ms,
-        figsize=(9, 16),
-        dpi=config["dpi"],
-        title=config["title"],
-        cmap=config["cmap"],
-        bar_size=config["bar_size"],
-        period_fmt=config["period_fmt"],
-        bar_label_size=12,
-        tick_label_size=12,
-        title_size=18,
-        period_label={"x": 0.98, "y": 0.15, "ha": "right", "size": 28},
-        bar_kwargs={"alpha": 0.85},
-        filter_column_colors=True,
-    )
 
 
 def run_ffmpeg(cmd: list[str]) -> None:
@@ -195,7 +160,6 @@ def finalize_video(
 ) -> None:
     """Single ffmpeg pass: force 1080x1920, overlay logo, mux audio."""
     inputs: list[str] = ["-i", str(video_in)]
-    # Normalize source to exactly 1080x1920 (scale-up if needed, then center-crop).
     filters = [
         "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,"
         "crop=1080:1920,setsar=1[bg]"
@@ -238,13 +202,17 @@ def main() -> None:
     df = load_dataframe(project / config["data"])
     output_path = project / config["output"]
 
+    icons = load_icons(project / config["icons_dir"], list(df.columns), size=config["icon_size_px"])
+    if icons:
+        print(f"  icons: {len(icons)}/{df.shape[1]} items", file=sys.stderr)
+
     logo_path = None if args.no_logo else resolve_asset(project, config["logo"], ("logo.png",))
     audio_path = None if args.no_audio else resolve_asset(project, config["audio"], AUDIO_CANDIDATES)
 
     print(f"project: {project}", file=sys.stderr)
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp) / "base.mp4"
-        render_chart(df, base, config)
+        render_bar_chart_race(df, base, icons=icons, config=config)
         finalize_video(base, logo_path, audio_path, output_path, fps=config["fps"])
 
     print(f"wrote {output_path}", file=sys.stderr)
