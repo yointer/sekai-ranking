@@ -101,7 +101,17 @@ def render_bar_chart_race(
 
     fig, ax = plt.subplots(figsize=(9, 16), dpi=dpi)
     fig.patch.set_facecolor(background)
-    fig.subplots_adjust(left=0.18, right=0.93, top=0.85, bottom=0.10)
+    # Reserve 10% white space on top and bottom of the frame for commentary text
+    # added later in an editor. Chart axes occupy the middle 80%, with the title
+    # rendered as a figure-level text inside that band (never escaping it).
+    fig.subplots_adjust(left=0.18, right=0.93, top=0.82, bottom=0.10)
+
+    if title:
+        fig.text(
+            0.5, 0.86, title,
+            ha="center", va="center",
+            fontsize=title_size, fontweight="bold",
+        )
 
     icon_trans = blended_transform_factory(ax.transAxes, ax.transData)
 
@@ -169,9 +179,6 @@ def render_bar_chart_race(
         ax.set_xlim(0, max_value * 1.08)
         ax.set_ylim(-0.5, n_bars - 0.5)
         ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-
-        if title:
-            ax.set_title(title, fontsize=title_size, fontweight="bold", pad=24)
 
         period_str = _format_period(df.index[lo], df.index[hi], alpha, period_fmt)
         ax.text(
