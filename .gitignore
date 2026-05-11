@@ -4,6 +4,5 @@ __pycache__/
 venv/
 .DS_Store
 
-# Generated outputs — ignore by default, but keep sample so users can preview.
-projects/*/out.mp4
-!projects/sample/out.mp4
+# Output MP4s are deliverables — keep them tracked. Override per-project with
+# a .gitignore inside the project folder if a particular video shouldn't ship.

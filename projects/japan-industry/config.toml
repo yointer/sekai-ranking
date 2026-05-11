@@ -1,0 +1,16 @@
+# 国勢調査 (Population Census), 総務省統計局 (Statistics Bureau of Japan).
+# Source file ro04b — 産業（旧大分類），男女別就業者数 (15歳以上), sheet その1.
+# 13 industries × 14 census points from 1920 to 2000.
+
+title              = "産業別就業者数"
+duration           = 30
+n_bars             = 8
+fps                = 30
+period_fmt         = "%Y"
+bar_size           = 0.85
+dpi                = 120
+title_size         = 72
+value_label_size   = 22
+period_label_size  = 64
+name_label_size    = 30
+background         = "white"

@@ -59,8 +59,11 @@ dpi                = 120
 title_size         = 54            # chart title font size
 value_label_size   = 22            # in-bar value labels
 period_label_size  = 36            # bottom-right date label
+name_label_size    = 28            # y-axis text labels (when no icon)
 icon_size_px       = 220           # source size for circular icons
 background         = "white"       # figure background (any matplotlib color or #hex)
+hold_final_pct     = 0.02          # fraction of total duration to hold on the final period
+font_path          = "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc"
 
 logo               = "logo.png"
 audio              = "audio.mp3"
@@ -69,7 +72,7 @@ icons_dir          = "icons"
 
 ### Optional assets
 
-- **`icons/<column>.png`** — One image per CSV column. Cropped to a circle and drawn where the y-axis label would normally be. Columns without a matching file show no icon. Accepted: `.png`, `.jpg`, `.jpeg`, `.webp`.
+- **`icons/<column>.png`** — One image per CSV column. Cropped to a circle and drawn in place of the y-axis label. Columns without a matching file fall back to plain text of the column name. Accepted: `.png`, `.jpg`, `.jpeg`, `.webp`.
 - **`logo.png`** — Overlaid at 18 % of video width in the top-right corner.
 - **`audio.<ext>`** — `.mp3`, `.wav`, `.m4a`, `.aac`. Looped if shorter than the video, trimmed if longer. Source video has no audio.
 
@@ -79,8 +82,11 @@ The rendering is custom (pure matplotlib + ffmpeg, no `bar_chart_race`) so we ca
 
 - No chart-area background fill (only the figure background shows through).
 - Bar value labels rendered **inside** each bar in bold white.
-- Y-axis labels replaced with circular icons; falls back to nothing when an icon is missing.
-- All sizes (title, in-bar labels, period label, icons) tunable via config.
+- Y-axis labels: circular icons when an `icons/<column>.<ext>` exists, otherwise the column name as bold text. Set `name_label_size` to control the text size.
+- 10 % white margin reserved on top and bottom of the frame for commentary overlays added later in a video editor.
+- Final `hold_final_pct` fraction of the duration (default 2 %) is a still snapshot of the last period.
+- Non-ASCII labels (Japanese, etc.) render correctly when `font_path` points to a font with the required glyphs. macOS default is Hiragino Kaku Gothic; override for other systems.
+- All sizes (title, in-bar labels, period label, icons, name labels) tunable via config.
 
 ## Usage
 

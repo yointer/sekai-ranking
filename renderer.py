@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.animation import FFMpegWriter, FuncAnimation
+from matplotlib.font_manager import FontProperties
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from matplotlib.transforms import blended_transform_factory
 from PIL import Image, ImageDraw
@@ -91,10 +92,16 @@ def render_bar_chart_race(
     title_size = int(config["title_size"])
     value_label_size = int(config["value_label_size"])
     period_label_size = int(config["period_label_size"])
+    name_label_size = int(config.get("name_label_size", 28))
     period_fmt = config.get("period_fmt")
     background = config.get("background") or "white"
+    font_path = config.get("font_path")
+    font_props = FontProperties(fname=font_path) if font_path else FontProperties()
 
     total_frames = max(int(round(duration * fps)), 2)
+    hold_pct = float(config.get("hold_final_pct", 0.0) or 0.0)
+    hold_frames = max(0, int(round(total_frames * hold_pct)))
+    animated_frames = max(2, total_frames - hold_frames)
     n_periods = len(df)
     columns = list(df.columns)
     colors = {col: DARK_PALETTE[i % len(DARK_PALETTE)] for i, col in enumerate(columns)}
@@ -111,6 +118,7 @@ def render_bar_chart_race(
             0.5, 0.86, title,
             ha="center", va="center",
             fontsize=title_size, fontweight="bold",
+            fontproperties=font_props,
         )
 
     icon_trans = blended_transform_factory(ax.transAxes, ax.transData)
@@ -118,8 +126,12 @@ def render_bar_chart_race(
     def update(frame_idx: int):
         ax.clear()
 
-        # Map frame -> fractional period position.
-        t = frame_idx / max(total_frames - 1, 1) * (n_periods - 1)
+        # Map frame -> fractional period position. The final `hold_frames` frames
+        # are clamped to the last period so the video ends with a still snapshot.
+        if frame_idx >= animated_frames:
+            t = float(n_periods - 1)
+        else:
+            t = frame_idx / max(animated_frames - 1, 1) * (n_periods - 1)
         lo = min(int(t), n_periods - 1)
         hi = min(lo + 1, n_periods - 1)
         alpha = 0.0 if hi == lo else t - lo
@@ -155,6 +167,7 @@ def render_bar_chart_race(
                 color="white",
                 fontsize=value_label_size,
                 fontweight="bold",
+                fontproperties=font_props,
             )
 
         for item, y in zip(top_items, y_positions):
@@ -169,6 +182,16 @@ def render_bar_chart_race(
                     pad=0.0,
                 )
                 ax.add_artist(ab)
+            else:
+                ax.text(
+                    -0.015, y, str(item),
+                    transform=icon_trans,
+                    ha="right", va="center",
+                    fontsize=name_label_size,
+                    fontweight="bold",
+                    color="#222222",
+                    fontproperties=font_props,
+                )
 
         ax.set_facecolor("none")
         for spine in ax.spines.values():
@@ -191,6 +214,7 @@ def render_bar_chart_race(
             fontsize=period_label_size,
             fontweight="bold",
             color="#555555",
+            fontproperties=font_props,
         )
         return []
 
@@ -201,6 +225,10 @@ def render_bar_chart_race(
         fps=fps, codec="libx264", bitrate=6000,
         extra_args=["-pix_fmt", "yuv420p"],
     )
-    print(f"  rendering: {total_frames} frames, {n_periods} periods, fps={fps}", flush=True)
+    print(
+        f"  rendering: {total_frames} frames ({animated_frames} animated + {hold_frames} hold), "
+        f"{n_periods} periods, fps={fps}",
+        flush=True,
+    )
     anim.save(str(output_path), writer=writer, dpi=dpi)
     plt.close(fig)
