@@ -1,0 +1,16 @@
+# Project settings. CLI flags override these values.
+
+title       = "Top Creators 2024"
+duration    = 20
+n_bars      = 5
+fps         = 30
+cmap        = "dark12"
+period_fmt  = "%Y-%m"
+bar_size    = 0.95
+dpi         = 120
+
+# Optional asset paths (relative to this folder).
+# Drop a logo.png here to overlay it in the top-right corner.
+# Drop an audio file (audio.mp3 / audio.wav / audio.m4a) here to use as background.
+logo  = "logo.png"
+audio = "audio.mp3"

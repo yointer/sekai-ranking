@@ -1,6 +1,6 @@
 # Bar Chart Racer for YouTube Shorts
 
-Turn a CSV of time-series rankings into a vertical (1080×1920) MP4 sized for YouTube Shorts.
+Turn a CSV of time-series rankings into a vertical (1080×1920) MP4 sized for YouTube Shorts. Each video lives in its own project folder with its data and optional assets.
 
 ## Prerequisites
 
@@ -10,17 +10,30 @@ Turn a CSV of time-series rankings into a vertical (1080×1920) MP4 sized for Yo
 ## Install
 
 ```bash
-python3.11 -m venv .venv
+pyenv install 3.11.10            # if not already installed
+pyenv local 3.11.10
+python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Input format (CSV wide)
+## Project folder layout
 
-- First column: time period (date string or any label). Dates like `2024-01` are auto-parsed.
-- Remaining columns: one per item being ranked. All numeric.
+Each video is a folder under `projects/`:
 
-Example (`examples/sample.csv`):
+```
+projects/
+  sample/
+    data.csv       # required — wide-format CSV (first column = time period)
+    config.toml    # optional — title, duration, asset paths
+    logo.png       # optional — overlaid in top-right corner
+    audio.mp3      # optional — background music (looped/trimmed to fit)
+    out.mp4        # generated output (overwritten each run)
+```
+
+### `data.csv` (CSV wide)
+
+First column is the time period (date string or any label). Remaining columns are items; cells are numeric values.
 
 ```csv
 date,Alice,Bob,Carol,Dave,Eve
@@ -29,32 +42,75 @@ date,Alice,Bob,Carol,Dave,Eve
 ...
 ```
 
+### `config.toml`
+
+All keys optional; CLI flags override these.
+
+```toml
+title       = "Top Creators 2024"
+duration    = 20             # seconds; YouTube Shorts max is 60
+n_bars      = 5
+fps         = 30
+cmap        = "dark12"
+period_fmt  = "%Y-%m"        # strftime for datetime index, or "{x}" for string labels
+bar_size    = 0.95
+dpi         = 120
+
+logo        = "logo.png"     # relative to project folder
+audio       = "audio.mp3"
+```
+
+### Optional assets
+
+- **`logo.png`** — Any PNG. Overlaid at 18% of video width in the top-right corner.
+- **`audio.<ext>`** — `.mp3`, `.wav`, `.m4a`, `.aac`. Looped if shorter than the video, trimmed if longer. Original video has no audio.
+
 ## Usage
 
 ```bash
-python generate.py -i examples/sample.csv -o out.mp4 --title "Sample Race" --duration 20
+python generate.py projects/sample
 ```
 
-### Flags
+Override config values via CLI:
 
-| Flag | Default | Purpose |
-|---|---|---|
-| `-i, --input` | required | Input CSV path. |
-| `-o, --output` | `out.mp4` | Output MP4 path. |
-| `-t, --title` | none | Chart title. |
-| `--duration` | `30` | Target video length (seconds). Shorts cap is 60. |
-| `--n-bars` | `10` | Max bars visible. |
-| `--fps` | `30` | Frame rate. |
-| `--cmap` | `dark12` | Color palette name. |
-| `--period-fmt` | auto | `strftime` for dates (e.g. `'%Y-%m'`) or `'{x}'` for string labels. |
-| `--bar-size` | `0.95` | Bar thickness 0–1. |
-| `--dpi` | `120` | With figsize 9×16 yields 1080×1920. |
+```bash
+python generate.py projects/sample --duration 30 --title "My Race"
+python generate.py projects/sample --no-audio --no-logo
+```
+
+## Make a new project
+
+```bash
+cp -r projects/sample projects/my-video
+# Edit projects/my-video/data.csv and projects/my-video/config.toml
+# Drop in logo.png and/or audio.mp3 if you want them
+python generate.py projects/my-video
+```
+
+The MP4 is written to `projects/my-video/out.mp4`.
+
+## CLI flags
+
+| Flag | Purpose |
+|---|---|
+| `project` (positional) | Project folder path. |
+| `-o, --output` | Output filename inside the project folder. |
+| `-t, --title` | Chart title. |
+| `--duration` | Target video length (seconds). |
+| `--n-bars` | Max bars visible at once. |
+| `--fps` | Frame rate. |
+| `--cmap` | bar_chart_race color palette name. |
+| `--period-fmt` | strftime for dates or `{x}` for labels. |
+| `--bar-size` | Bar thickness 0–1. |
+| `--dpi` | With figsize 9×16 yields 1080×1920. |
+| `--no-audio` | Skip audio mux even if audio file present. |
+| `--no-logo` | Skip logo overlay even if logo.png present. |
 
 ## Verify output
 
 ```bash
 ffprobe -v error -select_streams v:0 \
-  -show_entries stream=width,height,duration -of default=nw=1 out.mp4
+  -show_entries stream=width,height,duration -of default=nw=1 projects/sample/out.mp4
 ```
 
 Expect `width=1080`, `height=1920`, `duration` ≈ `--duration`.

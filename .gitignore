@@ -2,5 +2,8 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
-*.mp4
 .DS_Store
+
+# Generated outputs — ignore by default, but keep sample so users can preview.
+projects/*/out.mp4
+!projects/sample/out.mp4
