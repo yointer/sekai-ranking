@@ -14,7 +14,6 @@ icon_size_px       = 220     # source size for circular icons
 background         = "white"
 
 # Optional asset paths (relative to this folder).
-logo  = "logo.png"
 audio = "audio.mp3"
 
 # Optional icons folder. Looks for icons/<column-name>.{png,jpg,jpeg,webp};
