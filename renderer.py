@@ -104,14 +104,18 @@ def render_bar_chart_race(
     animated_frames = max(2, total_frames - hold_frames)
     n_periods = len(df)
     columns = list(df.columns)
-    colors = {col: DARK_PALETTE[i % len(DARK_PALETTE)] for i, col in enumerate(columns)}
+    custom_colors = config.get("colors") or {}
+    colors = {
+        col: custom_colors.get(col, DARK_PALETTE[i % len(DARK_PALETTE)])
+        for i, col in enumerate(columns)
+    }
 
     fig, ax = plt.subplots(figsize=(9, 16), dpi=dpi)
     fig.patch.set_facecolor(background)
     # Reserve 10% white space on top and bottom of the frame for commentary text
     # added later in an editor. Chart axes occupy the middle 80%, with the title
     # rendered as a figure-level text inside that band (never escaping it).
-    fig.subplots_adjust(left=0.18, right=0.93, top=0.82, bottom=0.10)
+    fig.subplots_adjust(left=0.22, right=0.95, top=0.82, bottom=0.10)
 
     if title:
         fig.text(
@@ -137,9 +141,9 @@ def render_bar_chart_race(
         alpha = 0.0 if hi == lo else t - lo
 
         values = df.iloc[lo] * (1 - alpha) + df.iloc[hi] * alpha
-        ranks_lo = df.iloc[lo].rank(method="first", ascending=False)
-        ranks_hi = df.iloc[hi].rank(method="first", ascending=False)
-        ranks = ranks_lo * (1 - alpha) + ranks_hi * alpha
+        # Rank by smoothed values directly so positions stay uniformly spaced.
+        # Bars jump one slot when their values cross, but no overlaps or gaps.
+        ranks = values.rank(method="first", ascending=False)
 
         top_items = ranks.nsmallest(n_bars).index.tolist()
         y_positions = [n_bars - ranks[item] for item in top_items]
@@ -206,15 +210,16 @@ def render_bar_chart_race(
         period_str = _format_period(df.index[lo], df.index[hi], alpha, period_fmt)
         ax.text(
             0.98,
-            0.02,
+            -0.04,
             period_str,
             transform=ax.transAxes,
             ha="right",
-            va="bottom",
+            va="top",
             fontsize=period_label_size,
             fontweight="bold",
             color="#555555",
             fontproperties=font_props,
+            clip_on=False,
         )
         return []
 

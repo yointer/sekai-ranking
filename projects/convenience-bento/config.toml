@@ -1,0 +1,31 @@
+# Fabricated "好き度" (likeability score, 0–100) for 9 bento items
+# across the three major Japanese convenience-store chains, 2010–2026.
+# Numbers are entirely演出上の架空データ — see CREDITS.md.
+
+title              = "コンビニ弁当 好き度王座"
+duration           = 30
+n_bars             = 9
+fps                = 30
+period_fmt         = "%Y"
+bar_size           = 0.85
+dpi                = 120
+title_size         = 56
+value_label_size   = 22
+period_label_size  = 64
+name_label_size    = 32
+background         = "white"
+hold_final_pct     = 0.02
+
+[colors]
+# セブン-イレブン: signature 3-stripe orange / red / dark green
+"幕の内"     = "#FF7A00"   # orange
+"牛めし"     = "#E60012"   # red
+"親子丼"     = "#008846"   # dark forest green
+# ローソン: Lawson navy + Natural Lawson pink + Store-100 yellow
+"のり弁"     = "#00377E"   # Lawson navy
+"麦のり弁"   = "#EC1683"   # Natural Lawson pink
+"鳥竜田弁"   = "#FFC72C"   # Lawson Store-100 yellow
+# ファミリーマート: FamiMart bright green / blue / accent cyan
+"明太弁"     = "#00A23F"   # FamiMart bright green
+"そぼろ弁"   = "#1E6FBE"   # FamiMart royal blue
+"カレー"     = "#5BC2E7"   # FamiMart accent cyan
