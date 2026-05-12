@@ -18,6 +18,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib.patheffects as path_effects
 from matplotlib.animation import FFMpegWriter, FuncAnimation
 from matplotlib.font_manager import FontProperties
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
@@ -109,13 +110,14 @@ def render_bar_chart_race(
         col: custom_colors.get(col, DARK_PALETTE[i % len(DARK_PALETTE)])
         for i, col in enumerate(columns)
     }
+    display_labels = config.get("labels") or {}
 
     fig, ax = plt.subplots(figsize=(9, 16), dpi=dpi)
     fig.patch.set_facecolor(background)
     # Reserve 10% white space on top and bottom of the frame for commentary text
     # added later in an editor. Chart axes occupy the middle 80%, with the title
     # rendered as a figure-level text inside that band (never escaping it).
-    fig.subplots_adjust(left=0.22, right=0.95, top=0.82, bottom=0.10)
+    fig.subplots_adjust(left=0.24, right=0.95, top=0.82, bottom=0.10)
 
     if title:
         fig.text(
@@ -149,20 +151,28 @@ def render_bar_chart_race(
         y_positions = [n_bars - ranks[item] for item in top_items]
         bar_values = [float(values[item]) for item in top_items]
 
-        ax.barh(
-            y_positions,
-            bar_values,
-            color=[colors[item] for item in top_items],
-            height=bar_size,
-            edgecolor="none",
-            alpha=0.95,
-        )
+        # Bars: solid colour if `colors[item]` is a string; horizontal stripe
+        # band if it's a list/tuple (the chain's tri-colour palette painted
+        # across every bar from that chain).
+        for item, y, val in zip(top_items, y_positions, bar_values):
+            spec = colors[item]
+            if isinstance(spec, (list, tuple)) and not isinstance(spec, str):
+                n_stripes = len(spec)
+                stripe_h = bar_size / n_stripes
+                top_edge = y + bar_size / 2
+                for i, c in enumerate(spec):
+                    sub_y = top_edge - (i + 0.5) * stripe_h
+                    ax.barh(sub_y, val, color=c, height=stripe_h,
+                            edgecolor="none", alpha=0.97)
+            else:
+                ax.barh(y, val, color=spec, height=bar_size,
+                        edgecolor="none", alpha=0.97)
 
         max_value = max(bar_values) if bar_values else 1.0
         for item, y, val in zip(top_items, y_positions, bar_values):
             if val <= 0:
                 continue
-            ax.text(
+            txt = ax.text(
                 val - max_value * 0.012,
                 y,
                 _format_value(val),
@@ -173,6 +183,11 @@ def render_bar_chart_race(
                 fontweight="bold",
                 fontproperties=font_props,
             )
+            # Thin dark outline so the value stays readable on yellow/cyan stripes.
+            txt.set_path_effects([
+                path_effects.Stroke(linewidth=2.5, foreground="#222"),
+                path_effects.Normal(),
+            ])
 
         for item, y in zip(top_items, y_positions):
             if item in icons:
@@ -188,7 +203,7 @@ def render_bar_chart_race(
                 ax.add_artist(ab)
             else:
                 ax.text(
-                    -0.015, y, str(item),
+                    -0.015, y, display_labels.get(item, str(item)),
                     transform=icon_trans,
                     ha="right", va="center",
                     fontsize=name_label_size,

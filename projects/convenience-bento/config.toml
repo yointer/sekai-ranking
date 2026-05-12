@@ -1,6 +1,10 @@
-# Fabricated "好き度" (likeability score, 0–100) for 9 bento items
-# across the three major Japanese convenience-store chains, 2010–2026.
-# Numbers are entirely演出上の架空データ — see CREDITS.md.
+# Fabricated "好き度" (likeability score) for 9 convenience-store bento
+# across 2010–2026. Numbers are演出上の架空データ — see CREDITS.md.
+#
+# Each chain's three bento are painted with the chain's tri-colour
+# brand palette (orange/red/green for セブン, navy/pink/yellow for
+# ローソン, green/blue/cyan for ファミマ) drawn as horizontal stripes
+# inside every bar from that chain.
 
 title              = "コンビニ弁当 好き度王座"
 duration           = 30
@@ -12,20 +16,33 @@ dpi                = 120
 title_size         = 56
 value_label_size   = 22
 period_label_size  = 64
-name_label_size    = 32
+name_label_size    = 30
 background         = "white"
 hold_final_pct     = 0.02
 
+# Tri-colour stripes per bar, keyed by full product name (matches data.csv columns).
 [colors]
 # セブン-イレブン: signature 3-stripe orange / red / dark green
-"幕の内"     = "#FF7A00"   # orange
-"牛めし"     = "#E60012"   # red
-"親子丼"     = "#008846"   # dark forest green
-# ローソン: Lawson navy + Natural Lawson pink + Store-100 yellow
-"のり弁"     = "#00377E"   # Lawson navy
-"麦のり弁"   = "#EC1683"   # Natural Lawson pink
-"鳥竜田弁"   = "#FFC72C"   # Lawson Store-100 yellow
-# ファミリーマート: FamiMart bright green / blue / accent cyan
-"明太弁"     = "#00A23F"   # FamiMart bright green
-"そぼろ弁"   = "#1E6FBE"   # FamiMart royal blue
-"カレー"     = "#5BC2E7"   # FamiMart accent cyan
+"お好み幕の内"                                = ["#FF7A00", "#E60012", "#008846"]
+"ふわっとろたまごの親子丼"                    = ["#FF7A00", "#E60012", "#008846"]
+"熟成たれの牛めし"                            = ["#FF7A00", "#E60012", "#008846"]
+# ローソン: Lawson navy / Natural Lawson pink / Store-100 yellow
+"これがのり弁当"                              = ["#00377E", "#EC1683", "#FFC72C"]
+"これが鶏竜田揚げ弁当"                        = ["#00377E", "#EC1683", "#FFC72C"]
+"これが豚生姜焼き弁当"                        = ["#00377E", "#EC1683", "#FFC72C"]
+# ファミリーマート: FamiMart bright green / royal blue / accent cyan
+"めんたい海苔弁当"                            = ["#00A23F", "#1E6FBE", "#5BC2E7"]
+"３０種類以上のスパイス使用こだわりカレー"     = ["#00A23F", "#1E6FBE", "#5BC2E7"]
+"肉汁ジュワッと！鉄板焼きハンバーグ弁当"      = ["#00A23F", "#1E6FBE", "#5BC2E7"]
+
+# Short labels for the y-axis (full names are too long to fit).
+[labels]
+"お好み幕の内"                                = "幕の内"
+"ふわっとろたまごの親子丼"                    = "親子丼"
+"熟成たれの牛めし"                            = "牛めし"
+"これがのり弁当"                              = "のり弁"
+"これが鶏竜田揚げ弁当"                        = "鶏竜田"
+"これが豚生姜焼き弁当"                        = "生姜焼"
+"めんたい海苔弁当"                            = "明太弁"
+"３０種類以上のスパイス使用こだわりカレー"     = "カレー"
+"肉汁ジュワッと！鉄板焼きハンバーグ弁当"      = "ハンバーグ"

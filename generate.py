@@ -47,6 +47,7 @@ CONFIG_DEFAULTS: dict = {
     "font_path": "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
     "hold_final_pct": 0.02,
     "colors": {},
+    "labels": {},
     "logo": None,
     "audio": None,
     "data": "data.csv",
