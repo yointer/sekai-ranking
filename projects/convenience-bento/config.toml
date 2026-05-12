@@ -16,7 +16,7 @@ dpi                = 120
 title_size         = 56
 value_label_size   = 22
 period_label_size  = 64
-name_label_size    = 30
+name_label_size    = 18
 background         = "white"
 hold_final_pct     = 0.02
 
@@ -36,13 +36,3 @@ hold_final_pct     = 0.02
 "肉汁ジュワッと！鉄板焼きハンバーグ弁当"      = ["#00A23F", "#1E6FBE", "#5BC2E7"]
 
 # Short labels for the y-axis (full names are too long to fit).
-[labels]
-"お好み幕の内"                                = "幕の内"
-"ふわっとろたまごの親子丼"                    = "親子丼"
-"熟成たれの牛めし"                            = "牛めし"
-"これがのり弁当"                              = "のり弁"
-"これが鶏竜田揚げ弁当"                        = "鶏竜田"
-"これが豚生姜焼き弁当"                        = "生姜焼"
-"めんたい海苔弁当"                            = "明太弁"
-"３０種類以上のスパイス使用こだわりカレー"     = "カレー"
-"肉汁ジュワッと！鉄板焼きハンバーグ弁当"      = "ハンバーグ"

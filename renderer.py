@@ -56,6 +56,44 @@ def load_icons(icons_dir: Path, columns: list[str], size: int = 220) -> dict[str
     return icons
 
 
+def _wrap_label(text: str, max_chars: int = 10) -> str:
+    """Wrap a long y-axis label so no line exceeds ~max_chars.
+
+    Prefers natural break points (punctuation, particles like の, ッ);
+    falls back to forced splits — possibly more than 2 lines — for the
+    longest names. Short labels are returned unchanged.
+    """
+    if len(text) <= max_chars:
+        return text
+    seps = ("！", "!", "・", " ", "　", "、", "。", "の", "ッ", "ス", "弁")
+    breaks: list[int] = []
+    for sep in seps:
+        start = 1
+        while True:
+            idx = text.find(sep, start)
+            if idx == -1:
+                break
+            breaks.append(idx + len(sep))
+            start = idx + 1
+    # Prefer breaks that fit strictly; allow a 1-char overshoot if no strict fit.
+    target = len(text) // 2
+    soft_max = max_chars + 1
+    for window in (max_chars, soft_max):
+        valid = sorted(
+            [b for b in breaks if b <= window and (len(text) - b) <= window],
+            key=lambda b: abs(b - target),
+        )
+        if valid:
+            cut = valid[0]
+            return text[:cut] + "\n" + text[cut:]
+    # No clean break — force split at max_chars and recurse if still long.
+    cut = max_chars
+    rest = text[cut:]
+    if len(rest) > max_chars:
+        return text[:cut] + "\n" + _wrap_label(rest, max_chars)
+    return text[:cut] + "\n" + rest
+
+
 def _format_value(v: float) -> str:
     if v >= 1_000_000_000:
         return f"{v / 1_000_000_000:.1f}B"
@@ -117,7 +155,7 @@ def render_bar_chart_race(
     # Reserve 10% white space on top and bottom of the frame for commentary text
     # added later in an editor. Chart axes occupy the middle 80%, with the title
     # rendered as a figure-level text inside that band (never escaping it).
-    fig.subplots_adjust(left=0.24, right=0.95, top=0.82, bottom=0.10)
+    fig.subplots_adjust(left=0.34, right=0.96, top=0.82, bottom=0.10)
 
     if title:
         fig.text(
@@ -202,14 +240,16 @@ def render_bar_chart_race(
                 )
                 ax.add_artist(ab)
             else:
+                raw = display_labels.get(item, str(item))
                 ax.text(
-                    -0.015, y, display_labels.get(item, str(item)),
+                    -0.015, y, _wrap_label(raw),
                     transform=icon_trans,
                     ha="right", va="center",
                     fontsize=name_label_size,
                     fontweight="bold",
                     color="#222222",
                     fontproperties=font_props,
+                    linespacing=1.0,
                 )
 
         ax.set_facecolor("none")
